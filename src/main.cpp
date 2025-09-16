@@ -55,7 +55,7 @@ int ABSJ1, ABSJ2;
 //void Drive(float deg, )
 //PID Drive Function from Useful.cpp
 /*void Drive(float inches, float speed){
-    float DPR = (360/(M_PI*2.75))*(3/4);        //DistancePerRotation
+    float DPR = (360/(M_PI*2.75))*(4.0/3.0);        //DistancePerRotation
 
     float TargetDistance = inches * DPR;
     float KP = .5;    //Overshoot smaller Undershoot Bigger
@@ -87,16 +87,21 @@ int ABSJ1, ABSJ2;
 
 
 
-//Try at some point
 
-/*void Drive(float inches, float speed) {
-    float DPR = (360 / (M_PI * 2.75)) * (3 / 4);  // DistancePerRotation, adjust the factor to your wheel size
-    float TargetDistance = inches * DPR;  // Target distance based on the input
 
+void Drive1(float inches, float speed) {
+    float TargetDistance = inches; //Units are Inches
+    float DPI = (360 / (M_PI * 2.75)) * (4.0 / 3.0);  // Degrees Per Inch = Degrees per inch of travel
+    float TargetDegrees = TargetDistance * DPI;  // Target distance based on the input
+    
     // PID constants
     float KP = 1.0;  // Proportional gain
-    float KI = 1.0; // Integral gain (if needed)
-    float KD = 1.0; // Derivative gain (if needed)
+    float KI = .01; // Integral gain (if needed)
+    float KD = .01; // Derivative gain (if needed)
+    double SlewRate = .5;
+    double PrevOutput = 0.0;
+    double LimitedOutput;
+
 
     float lastError = 0;
     float integral = 0;
@@ -104,42 +109,54 @@ int ABSJ1, ABSJ2;
     frontLeft.resetPosition();
     frontRight.resetPosition();
 
-    float Error = TargetDistance;
+    float Error = TargetDegrees;
     float Output;
 
     // PID control loop
-    do {
-        float WheelPos = (frontRight.position(vex::degrees) + frontLeft.position(vex::degrees)) / 2;
-        Error = TargetDistance - WheelPos;  // Calculate the error
-        integral += Error;  // Integral term (accumulated error over time)
-        float derivative = Error - lastError;  // Derivative term (change in error)
+  do {
+  float WheelPos = (frontRight.position(vex::degrees) + frontLeft.position(vex::degrees)) / 2;
+  Error = TargetDegrees - WheelPos;  // Calculate the error
+  integral += Error;  // Integral term (accumulated error over time)
+  float derivative = Error - lastError;  // Derivative term (change in error)
         
-        // Calculate the PID output
-        Output = (KP * Error) + (KI * integral) + (KD * derivative);
-        
-        // Limit the speed to the max speed
-        if (Output > speed) Output = speed;
-        if (Output < -speed) Output = -speed;
+  // Calculate the PID output
+  Output = (KP * Error) + (KI * integral) + (KD * derivative);
+    
+ // Limit the speed to the max speed
+ //if (Output > speed) Output = speed;
+// if (Output < -speed) Output = -speed;
 
-        // Set motor speeds based on the output of the PID controller
-        frontLeft.spin(forward, Output, pct);
-        middleLeft.spin(forward, Output, pct);
-        backLeft.spin(forward, Output, pct);
-        frontRight.spin(forward, Output, pct);
-        middleRight.spin(forward, Output, pct);
-        backRight.spin(forward, Output, pct);
-
-        lastError = Error;  // Save the error for the next loop iteration
-
-        wait(20, msec);  // Wait a short amount to prevent overload
-    } while (fabs(Error) > 1);  // Continue until the error is small enough (robot reaches the target position)
-
-   stopMotors();  // Stop the motors once the target is reached
-}*/
+if (fabs(Output - PrevOutput) > SlewRate) {
+ if (Output > PrevOutput) {
+  LimitedOutput = PrevOutput + SlewRate;
+ } else {
+  LimitedOutput = PrevOutput - SlewRate;
+ }
+} else {
+  LimitedOutput = Output;
+}
 
 
 
-void DriveSimple(float inches, float speed) {
+ // Set motor speeds based on the output of the PID controller
+  frontLeft.spin(forward, LimitedOutput, pct);
+  middleLeft.spin(forward, LimitedOutput, pct);
+  backLeft.spin(forward, LimitedOutput, pct);
+  frontRight.spin(forward, LimitedOutput, pct);
+  middleRight.spin(forward, LimitedOutput, pct);
+  backRight.spin(forward, LimitedOutput, pct);
+
+  lastError = Error;  // Save the error for the next loop iteration
+  PrevOutput = LimitedOutput;
+   wait(20, msec);  // Wait a short amount to prevent overload
+} while (fabs(Error) > 10);  // Continue until the error is small enough (robot reaches the target position)
+
+  stopMotors();  // Stop the motors once the target is reached
+}
+
+
+//Works, wheelies, no PID
+/*void DriveSimple(float inches, float speed) {
     float DPR = (360.0 / (M_PI * 2.75)) * (4.0 / 3.0);  // DistancePerRotation
     float TargetDistance = inches * DPR;  // Target distance based on the input
 
@@ -162,7 +179,7 @@ void DriveSimple(float inches, float speed) {
 
     stopMotors();
 }
-
+*/
 
 
 
@@ -244,7 +261,8 @@ void pre_auton(void) {
 //*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-DriveSimple(12, 15);
+//DriveSimple(12, 50);
+Drive1(48, 25);
 }
 
 void drive(int J1, int J2){
