@@ -187,17 +187,28 @@ float KP = 0.2;
 float KI = 0.1;
 float KD = 0.1;
 
-float Error;
+float Error = 0;
+float Integral = 0;
+float Derivative = 0;
+float LastError = 0;
+float Output = 0;
 
 frontLeft.resetPosition();
 frontRight.resetPosition();
 do{
   float WheelPos = (frontLeft.position(degrees))+(frontRight.position(degrees))/(2.0);
   Error = TargetDistance - WheelPos;
-  float Output = (KP * Error);
+
+Integral += Error;
+Derivative = Error - LastError;
+
+  float Output = (KP * Error) + (KI * Integral) + (KD * Derivative);
+
+  float LastError = Error;
+
 
   if(Output > speed) Output = speed;
-  if(Output < -speed) Output = speed;
+  if(Output < -speed) Output = -speed;
 
   frontLeft.spin(forward, Output, pct);
   middleLeft.spin(forward, Output, pct);
@@ -205,6 +216,8 @@ do{
   frontRight.spin(forward, Output, pct);
   middleRight.spin(forward, Output, pct);
   backRight.spin(forward, Output, pct);
+
+LastError = Error;
 
 } while (fabs(Error)>1);
 wait(20, msec);
@@ -296,8 +309,8 @@ void pre_auton(void) {
 void autonomous(void) {
 //DriveSimple(12, 25);
 Drive1(24, 25);
-wait(1, sec);
-Turn1(90, 50);
+wait(0.5, sec);
+Turn1(-90, 50);
 //Drive1(48, 25);
 }
 
