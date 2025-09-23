@@ -54,6 +54,8 @@ int ABSJ1, ABSJ2;
 
 //void Drive(float deg, )
 //PID Drive Function from Useful.cpp
+
+
 /*void Drive(float inches, float speed){
     float DPR = (360/(M_PI*2.75))*(4.0/3.0);        //DistancePerRotation
 
@@ -83,12 +85,7 @@ int ABSJ1, ABSJ2;
    stopMotors();
 }*/
 
-
-
-
-
-
-
+/*
 void Drive1(float inches, float speed) {
     float TargetDistance = inches; //Units are Inches
     float DPI = (360 / (M_PI * 2.75)) * (4.0 / 3.0);  // Degrees Per Inch = Degrees per inch of travel
@@ -153,7 +150,7 @@ if (fabs(Output - PrevOutput) > SlewRate) {
 
   stopMotors();  // Stop the motors once the target is reached
 }
-
+*/
 
 //Works, wheelies, no PID
 /*void DriveSimple(float inches, float speed) {
@@ -181,32 +178,68 @@ if (fabs(Output - PrevOutput) > SlewRate) {
 }
 */
 
+//PID Drive Function
+void Drive1(float inches, float speed){
+float DPR = (360/(M_PI*2.75))*(4.0/3.0);
 
+float TargetDistance = inches * DPR;
+float KP = 0.2;
+float KI = 0.1;
+float KD = 0.1;
+
+float Error;
+
+frontLeft.resetPosition();
+frontRight.resetPosition();
+do{
+  float WheelPos = (frontLeft.position(degrees))+(frontRight.position(degrees))/(2.0);
+  Error = TargetDistance - WheelPos;
+  float Output = (KP * Error);
+
+  if(Output > speed) Output = speed;
+  if(Output < -speed) Output = speed;
+
+  frontLeft.spin(forward, Output, pct);
+  middleLeft.spin(forward, Output, pct);
+  backLeft.spin(forward, Output, pct);
+  frontRight.spin(forward, Output, pct);
+  middleRight.spin(forward, Output, pct);
+  backRight.spin(forward, Output, pct);
+
+} while (fabs(Error)>1);
+wait(20, msec);
+stopMotors;
+}
 
 
 
 //PID Turn Function
-/*void Turn(float degrees, float speed){
-    Inertial.resetRotation();
-    float KP = .1;
-    float Error;
-    do{
-        float Inertialrotation = Inertial.rotation(deg);
-        Error = degrees - Inertialrotation;
-        float Output = Error * KP;
-        if(Output > speed) Output = speed;
-        if (Output < -speed) Output = -speed;
+void Turn1(float degrees, float speed){
+  Inertial.resetRotation();
+ float KP = 0.5;
+  float Error;
+  do{
+     float Inertialrotation = Inertial.rotation(deg);
+     Error = degrees - Inertialrotation;
+     float Output = Error * KP;
+     if(Output > speed) Output = speed;
+     if (Output < -speed) Output = -speed;
 
-        frontLeft.spin(forward, Output, pct);
-        middleLeft.spin(forward, Output, pct);
-        backLeft.spin(forward, Output, pct);
-        frontRight.spin(reverse, Output, pct);
-        middleRight.spin(reverse, Output, pct);
+    frontLeft.spin(forward, Output, pct);
+     middleLeft.spin(forward, Output, pct);
+     backLeft.spin(forward, Output, pct);
+     frontRight.spin(reverse, Output, pct);
+     middleRight.spin(reverse, Output, pct);
         backRight.spin(reverse, Output, pct);
         
 } while (fabs(Error)>1);
-  stopMotors();*/
-//}
+wait(20, msec);
+  stopMotors();
+}
+
+// void AutonIntakef() {
+// topIntake.spin(forward, pct);
+// }
 
 void stopMotors() {      //Stop Drive Motors Command
 middleLeft.setStopping(brakeType::brake);
@@ -245,7 +278,7 @@ int deadzone = 5;
 /*---------------------------------------------------------------------------*/
 
 void pre_auton(void) {
-  TM.set(true);
+  TM.set(false);
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
@@ -261,8 +294,11 @@ void pre_auton(void) {
 //*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-//DriveSimple(12, 50);
-Drive1(48, 25);
+//DriveSimple(12, 25);
+Drive1(24, 25);
+wait(1, sec);
+Turn1(90, 50);
+//Drive1(48, 25);
 }
 
 void drive(int J1, int J2){
