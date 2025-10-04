@@ -152,6 +152,17 @@ if (fabs(Output - PrevOutput) > SlewRate) {
 }
 */
 
+void Drive1(int dist, int speed){
+  float rotations;
+  rotations = dist*(360/(M_PI*2.75))*(4.0/3.0);
+  frontLeft.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, false);
+  middleLeft.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, false);
+  backLeft.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, false);
+  frontRight.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, false);
+  middleRight.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, false);
+  backRight.spinFor(forward, rotations, degrees, speed, velocityUnits::pct, true);
+}
+
 //Works, wheelies, no PID
 /*void DriveSimple(float inches, float speed) {
     float DPR = (360.0 / (M_PI * 2.75)) * (4.0 / 3.0);  // DistancePerRotation
@@ -179,51 +190,51 @@ if (fabs(Output - PrevOutput) > SlewRate) {
 */
 
 //PID Drive Function
-void Drive1(float inches, float speed){
+/*void Drive1(float inches, float speed){
 float DPR = (360/(M_PI*2.75))*(4.0/3.0);
 
 float TargetDistance = inches * DPR;
-float KP = 0.2;
-float KI = 0.1;
-float KD = 0.1;
+float KP = 1.0;
+float KI = 0.001;
+//float KD = 0.1;
 
-float Error = 0;
-float Integral = 0;
-float Derivative = 0;
-float LastError = 0;
-float Output = 0;
+float Error;
+float Integral;
+//float Derivative = 0;
+//float LastError = 0;
+float Output;
 
 frontLeft.resetPosition();
 frontRight.resetPosition();
 do{
-  float WheelPos = (frontLeft.position(degrees))+(frontRight.position(degrees))/(2.0);
+  float WheelPos = (frontLeft.position(rev)+(frontRight.position(rev)))/(2.0);
   Error = TargetDistance - WheelPos;
 
 Integral += Error;
-Derivative = Error - LastError;
+//Derivative = Error - LastError;
 
-  float Output = (KP * Error) + (KI * Integral) + (KD * Derivative);
+  float Output = (KP * Error) + (KI * Integral);
 
-  float LastError = Error;
+//  float LastError = Error;
 
 
   if(Output > speed) Output = speed;
   if(Output < -speed) Output = -speed;
 
-  frontLeft.spin(forward, Output, pct);
-  middleLeft.spin(forward, Output, pct);
-  backLeft.spin(forward, Output, pct);
-  frontRight.spin(forward, Output, pct);
-  middleRight.spin(forward, Output, pct);
-  backRight.spin(forward, Output, pct);
+  frontLeft.spin(reverse, Output, pct);
+  middleLeft.spin(reverse, Output, pct);
+  backLeft.spin(reverse, Output, pct);
+  frontRight.spin(reverse, Output, pct);
+  middleRight.spin(reverse, Output, pct);
+  backRight.spin(reverse, Output, pct);
 
-LastError = Error;
+//LastError = Error;
 
 } while (fabs(Error)>1);
 wait(20, msec);
 stopMotors;
 }
-
+*/
 
 
 //PID Turn Function
@@ -239,11 +250,11 @@ void Turn1(float degrees, float speed){
      if (Output < -speed) Output = -speed;
 
     frontLeft.spin(forward, Output, pct);
-     middleLeft.spin(forward, Output, pct);
-     backLeft.spin(forward, Output, pct);
-     frontRight.spin(reverse, Output, pct);
-     middleRight.spin(reverse, Output, pct);
-        backRight.spin(reverse, Output, pct);
+    middleLeft.spin(forward, Output, pct);
+    backLeft.spin(forward, Output, pct);
+    frontRight.spin(reverse, Output, pct);
+    middleRight.spin(reverse, Output, pct);
+    backRight.spin(reverse, Output, pct);
         
 } while (fabs(Error)>1);
 wait(20, msec);
@@ -292,6 +303,7 @@ int deadzone = 5;
 
 void pre_auton(void) {
   TM.set(false);
+  Inertial.calibrate(2);
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
@@ -308,9 +320,13 @@ void pre_auton(void) {
 
 void autonomous(void) {
 //DriveSimple(12, 25);
-Drive1(24, 25);
+Drive1(40, 25);
 wait(0.5, sec);
-Turn1(-90, 50);
+Turn1(-88, 50);
+wait(0.25, sec);
+TM.set(true);
+wait(0.25, sec);
+Drive1(18, 25);
 //Drive1(48, 25);
 }
 
